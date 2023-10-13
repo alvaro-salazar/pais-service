@@ -41,8 +41,7 @@ public class PaisServiceImpl implements IPaisService{
     @Transactional(readOnly = true) //Se encarga de manejar las transacciones de la base de datos y readOnly es para que sea de solo lectura y no se pueda modificar
     @Override
     public List<Pais> findAll() {
-        List<Pais> paises = (List<Pais>) paisDao.findAll();
-        return paises;
+        return (List<Pais>) paisDao.findAll();
     }
 
     /**
@@ -52,7 +51,7 @@ public class PaisServiceImpl implements IPaisService{
      */
     @Override
     public Pais findById(Long id) {
-        return (Pais) paisDao.findById(id).get();
+        return paisDao.findById(id).get();
     }
 
     /**

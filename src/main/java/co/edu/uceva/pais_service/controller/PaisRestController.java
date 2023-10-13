@@ -1,7 +1,6 @@
 package co.edu.uceva.pais_service.controller;
 
 import co.edu.uceva.pais_service.model.service.IPaisService;
-import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
