@@ -1,0 +1,10 @@
+INSERT INTO pais (pais) VALUES ('colombia');
+INSERT INTO pais (pais) VALUES ('venezuela');
+INSERT INTO pais (pais) VALUES ('argentina');
+INSERT INTO pais (pais) VALUES ('peru');
+INSERT INTO pais (pais) VALUES ('ecuador');
+INSERT INTO pais (pais) VALUES ('UK');
+INSERT INTO pais (pais) VALUES ('US');
+INSERT INTO pais (pais) VALUES ('Francia');
+INSERT INTO pais (pais) VALUES ('Alemania');
+INSERT INTO pais (pais) VALUES ('Italia');
