@@ -1,39 +1,171 @@
 name: Prueba
+# Controles de flujo (on, env, jobs, steps, etc)
+on:       # Eventos que disparan el flujo de trabajo (push, pull_request, etc)
+  push:         # Evento push
+    branches: [ main ]  # Rama master
+  pull_request:           # Evento pull_request (PR)
+    branches: [ main ]  # Rama master
 
-on:
-  push:
-    branches: [ main ]
+jobs:         # Trabajos que se ejecutan en paralelo (build, test, deploy, etc)
+  unit-test:        # Nombre del trabajo unit-test (prueba unitaria)
+    runs-on: ubuntu-latest    # Sistema operativo donde se ejecuta el trabajo (ubuntu-latest, windows-latest, macos-latest)
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+    services:                 # Servicios que se ejecutan en paralelo (postgres, mysql, redis, etc)
+      db:                         # Nombre del servicio db (base de datos)
+        image: postgres               # La imagen de Docker para usarla como contenedor para ejecutar el action. El valor puede ser el nombre de imagen de Docker Hub un nombre de registro.
+        env:                          # Variables de entorno que se pasan al servicio
+          POSTGRES_USER: devdb            # Usuario de la base de datos
+          POSTGRES_PASSWORD: a1b2c3d4     # Contraseña de la base de datos
+          POSTGRES_DB: curso_springboot   # Nombre de la base de datos
+        ports:                        # Puertos que se exponen del servicio
+          - 5432:5432                     # Puerto de la base de datos (5432:5432) (puerto_host:puerto_contenedor)
 
-    services:
-      db:
-        image: postgres
-        env:
-          POSTGRES_USER: devdb
-          POSTGRES_PASSWORD: a1b2c3d4
-          POSTGRES_DB: curso_springboot
-        ports:
-          - 5432:5432
+    steps:                    # Pasos que se ejecutan en el trabajo (checkout, build, test, deploy, etc)
+      - name: Haciendo Checkout     # Nombre del paso
+        uses: actions/checkout@v3     # Acción que se ejecuta un checkout del repositorio
 
-    steps:
-      - name: Haciendo Checkout
-        uses: actions/checkout@v2
+      - name: Ajustando el JDK 17   # Nombre del paso
+        uses: actions/setup-java@v3   # Acción ejecuta el setup de java
+        with:                         # Argumentos que se pasan a la acción
+          java-version: 17.x            # Versión de java que se instala
+          distribution: adopt           # Distribución de java que se instala (adopt, temurin, zulu, etc)
+          cache: maven                  # Cache de maven, se usa para no descargar las dependencias de maven en cada ejecución (maven, gradle, etc)
 
-      - name: Ajustando el JDK
-        uses: actions/setup-java@v2
-        with:
-          java-version: 17
+      - name: Hacer build con Maven # Nombre del paso
+        run: mvn --batch-mode --update-snapshots clean package  # Comando que se ejecuta en el paso (mvn --batch-mode --update-snapshots clean package)
 
-      - name: Build con Maven
-        run: mvn clean package -DskipTests
+      - name: Ejecutar las pruebas unitarias  # Nombre del paso
+        env:                                      # Variables de entorno que se pasan a application.properties de spring
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/curso_springboot    # URL de la base de datos
+          SPRING_DATASOURCE_USERNAME: devdb                                           # Usuario de la base de datos
+          SPRING_DATASOURCE_PASSWORD: a1b2c3d4                                        # Contraseña de la base de datos
+        run: mvn --batch-mode test                # Comando que se ejecuta en el paso (mvn --batch-mode test)
 
-      - name: Ejecutando pruebas con Docker
-        run: |
-          docker build -t pais-service .
-          docker run -e SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/curso_springboot -e SPRING_DATASOURCE_USERNAME=devdb -e SPRING_DATASOURCE_PASSWORD=a1b2c3d4 --network host pais-service mvn test
+      - name: Generar el reporte Surefire HTML    # Nombre del paso
+        run: mvn surefire-report:report             # Comando que se ejecuta en el paso (mvn surefire-report:report)
 
-      - name: Generar el reporte Surefire
-        run: mvn surefire-report:report
+      - name: Copia el reporte Surefire HTML al repositorio   # Nombre del paso
+        run: |                                                  # Se copia el reporte HTML de Surefire al repositorio 
+          mkdir -p reports  
+          cp -r target/surefire-reports/* reports/
+        if: always()            # Condición que se evalua para ejecutar el paso (always(), success(), failure(), etc)
+
+      - name: Copia el reporte HTML de Surefire al repositorio # Nombre del paso
+        uses: actions/upload-artifact@v3                        # Acción que se sube un artefacto al repositorio
+        with:                                                   # Argumentos que se pasan a la acción
+          name: Reporte Surefire HTML                               # Nombre del artefacto
+          path: target/site/surefire-report.html                    # Ruta del artefacto
+
+
+  # DOCUMENTACION
+
+  # JOB
+  # Un trabajo (job) contiene una secuencia de tareas llamadas pasos (steps). Los pasos pueden ejecutar comandos, tareas de configuración o
+  # acciones en tu repositorio, un repositorio público o una acción publicada en un registro Docker. No todos los pasos
+  # ejecutan acciones, pero todas las acciones se ejecutan como un paso. Cada paso se ejecuta en su propio proceso en el
+  # entorno virtual y tiene acceso al espacio de trabajo y al sistema de archivos. Debido a que los pasos se ejecutan en su
+  # propio proceso, los cambios en las variables de entorno no se conservan entre los pasos. GitHub proporciona pasos
+  # integrados para configurar y completar un trabajo. Debe contener ya sea `uses` o `run`.
+
+  # NAME
+  # Un nombre para su step y mostrarlo en GitHub.
+
+  # USES
+  # Selecciona una acción para ejecutar como parte de un paso en tu trabajo.
+  # Una acción es una unidad de código reutilizable. Puedes usar una acción definida
+  # en el mismo repositorio que el flujo de trabajo, en un repositorio público o en
+  # una imagen de contenedor Docker publicada (https://hub.docker.com/).
+  # Recomendamos encarecidamente que incluyas la versión de la acción que estás
+  # utilizando especificando una referencia Git, SHA o número de etiqueta de Docker.
+  # Si no especificas una versión, podría romper tus flujos de trabajo o causar
+  # un comportamiento inesperado cuando el propietario de la acción publique una
+  # actualización.
+  # - Usar el SHA de confirmación de una versión de acción publicada es lo más
+  #   seguro en cuanto a estabilidad y seguridad.
+  # - Usar la versión principal específica de la acción te permite recibir
+  #   correcciones críticas y parches de seguridad mientras mantienes la
+  #   compatibilidad. También garantiza que tu flujo de trabajo siga funcionando.
+  # - Usar la rama principal de una acción puede ser conveniente, pero si alguien
+  #   publica una nueva versión principal con un cambio que rompa, tu flujo de
+  #   trabajo podría dejar de funcionar.
+  # Algunas acciones requieren entradas que debes configurar usando la palabra
+  # clave "with". Revisa el archivo README de la acción para determinar las
+  # entradas requeridas.
+  # Las acciones son archivos JavaScript o contenedores Docker. Si la acción que
+  # estás usando es un contenedor Docker, debes ejecutar el trabajo en un entorno
+  # virtual de Linux. Para obtener más detalles, consulta
+  # https://help.github.com/en/articles/virtual-environments-for-github-actions.
+
+  # RUN
+  # Ejecuta programas de línea de comandos utilizando el shell del sistema operativo.
+  # Si no proporcionas un nombre, el nombre del paso se establecerá por defecto en
+  # el texto especificado en el comando de ejecución.
+  # Los comandos se ejecutan utilizando shells no interactivos de forma predeterminada.
+  # Puedes elegir un shell diferente y personalizar el shell utilizado para ejecutar
+  # los comandos. Para obtener más información, consulta
+  # https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#using-a-specific-shell.
+  # Cada palabra clave "run" representa un nuevo proceso y shell en el entorno virtual.
+  # Cuando proporcionas comandos de varias líneas, cada línea se ejecuta en el mismo shell.
+
+  # IF
+  # Puedes usar la condición "if" para evitar que un paso se ejecute a menos que se
+  # cumpla una condición. Puedes utilizar cualquier contexto admitido y expresión
+  # para crear una condición. Las expresiones en una condición "if" no requieren
+  # la sintaxis ${{ }}.
+  # Para obtener más información, consulta
+  # https://help.github.com/en/articles/contexts-and-expression-syntax-for-github-actions.
+
+  # MAP
+  # Un mapa de los parámetros de entrada definidos por la acción. Cada parámetro de
+  # entrada es un par clave/valor. Los parámetros de entrada se configuran como
+  # variables de entorno. La variable se antepone con INPUT_ y se convierte a
+  # mayúsculas.
+
+  # SERVICES
+  # Contenedores adicionales para alojar servicios en un trabajo de un flujo de trabajo.
+  # Estos son útiles para crear bases de datos o servicios de caché como Redis. El
+  # ejecutor en la máquina virtual creará automáticamente una red y gestionará el
+  # ciclo de vida de los contenedores de servicio. Cuando usas un contenedor de
+  # servicio en un trabajo o cuando tu paso utiliza acciones de contenedor, no es
+  # necesario configurar información de puertos para acceder al servicio. Docker
+  # expone automáticamente todos los puertos entre contenedores en la misma red.
+  # Cuando tanto el trabajo como la acción se ejecutan en un contenedor, puedes
+  # hacer referencia directa al contenedor por su nombre de host. El nombre de host
+  # se asigna automáticamente al nombre del servicio. Cuando un paso no utiliza una
+  # acción de contenedor, debes acceder al servicio mediante "localhost" y enlazar
+  # los puertos.
+
+  # RUNS-ON
+  # El tipo de máquina en la que se ejecutará el trabajo. La máquina puede ser
+  # un ejecutor alojado por GitHub o un ejecutor alojado por uno mismo (self-hosted).
+
+  # ON
+  # El nombre del evento de GitHub que desencadena el flujo de trabajo. Puedes
+  # proporcionar una sola cadena de evento, un arreglo de eventos, un arreglo de
+  # tipos de eventos o un mapa de configuración de eventos que programa un flujo
+  # de trabajo o restringe la ejecución de un flujo de trabajo a cambios específicos
+  # en archivos, etiquetas o ramas. Para obtener una lista de eventos disponibles,
+  # consulta https://help.github.com/en/github/automating-your-workflow-with-github-actions/events-that-trigger-workflows.
+
+  # PUSH
+  # Ejecuta tu flujo de trabajo cuando alguien hace un push a una rama del
+  # repositorio, lo que desencadena el evento de push. Nota: La carga del
+  # webhook disponible para GitHub Actions no incluye los atributos añadidos,
+  # eliminados y modificados en el objeto de confirmación. Puedes obtener el
+  # objeto de confirmación completo utilizando la API REST. Para obtener más
+  # información, consulta https://developer.github.com/v3/repos/commits/#get-a-single-commit.
+
+  # PULL_REQUEST
+  # Ejecuta tu flujo de trabajo cada vez que ocurra el evento pull_request. Más de
+  # un tipo de actividad desencadena este evento. Para obtener información sobre
+  # la API REST, consulta https://developer.github.com/v3/pulls. Nota: Los flujos
+  # de trabajo no se ejecutan en repositorios base privados cuando se abre una
+  # solicitud de extracción desde un repositorio bifurcado. Cuando creas una
+  # solicitud de extracción desde un repositorio bifurcado al repositorio base,
+  # GitHub envía el evento pull_request al repositorio base y no ocurren eventos
+  # de solicitud de extracción en el repositorio bifurcado. Los flujos de trabajo
+  # no se ejecutan en repositorios bifurcados de forma predeterminada. Debes
+  # habilitar GitHub Actions en la pestaña "Actions" del repositorio bifurcado.
+  # Los permisos para el GITHUB_TOKEN en repositorios bifurcados son de solo lectura.
+  # Para obtener más información sobre el GITHUB_TOKEN, consulta
+  # https://help.github.com/en/articles/virtual-environments-for-github-actions.
