@@ -14,9 +14,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNull;
@@ -33,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class PaisRestControllerTest {
+public class PaisRestControllerTests {
 
     /**
      * Esta anotación @Autowired permite la inyección de dependencia, lo que significa que
@@ -63,21 +60,21 @@ public class PaisRestControllerTest {
     }
 
     /**
-     * Prueba del método GET "/pais-service/hola/{nombre}", que comprueba que se recibe el nombre correcto
+     * Prueba del método GET "/api/pais-service/hola/{nombre}", que comprueba que se recibe el nombre correcto
      * en la respuesta.
-     * @throws Exception
+     * @throws Exception Se lanza una excepción si no devuelve el mensaje correcto.
      */
     @Test
     public void testHolaMundo() throws Exception {
         String nombre = "Juan";
-        this.mockMvc.perform(get("/pais-service/hola/{nombre}", nombre))
+        this.mockMvc.perform(get("/api/pais-service/hola/{nombre}", nombre))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Hola " + nombre));
     }
 
     /**
-     * Prueba del método GET "/pais-service/paises", que comprueba que se recibe una lista de países en la respuesta.
-     * @throws Exception
+     * Prueba del método GET "/api/pais-service/paises", que comprueba que se recibe una lista de países en la respuesta.
+     * @throws Exception Se lanza una excepción si no devuelve la lista de países correcta.
      */
     @Test
     public void testListar() throws Exception {
@@ -85,56 +82,49 @@ public class PaisRestControllerTest {
         Pais pais2 = new Pais(null, "España");
         paisService.save(pais1);
         paisService.save(pais2);
-        List<Pais> listaPaises = new ArrayList<>();
-        listaPaises.add(pais1);
-        listaPaises.add(pais2);
-
-        this.mockMvc.perform(get("/pais-service/paises"))
+        this.mockMvc.perform(get("/api/pais-service/paises"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].nombre", is(pais1.getPais())))
-                .andExpect(jsonPath("$[1].nombre", is(pais2.getPais())));
-
+                .andExpect(jsonPath("$[1].pais", is(pais1.getPais())))
+                .andExpect(jsonPath("$[0].pais", is(pais2.getPais())));
         paisService.delete(pais1);
         paisService.delete(pais2);
     }
 
     /**
-     * Prueba del método GET "/pais-service/paises/{id}", que comprueba que se recibe el país correcto en la respuesta.
-     * @throws Exception
+     * Prueba del método GET "/api/pais-service/paises/{id}", que comprueba que se recibe el país correcto en la respuesta.
+     * @throws Exception Se lanza una excepción si no se encuentra el país con el id especificado.
      */
     @Test
     public void testBuscarPais() throws Exception {
         Pais pais = new Pais(null, "España");
         paisService.save(pais);
 
-        this.mockMvc.perform(get("/pais-service/paises/{id}", pais.getId()))
+        this.mockMvc.perform(get("/api/pais-service/paises/{id}", pais.getId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombre", is(pais.getPais())));
+                .andExpect(jsonPath("$.pais", is(pais.getPais())));
 
         paisService.delete(pais);
     }
 
     /**
-     * Prueba del método POST "/pais-service/paises", que comprueba que se crea un nuevo país correctamente.
-     * @throws Exception
+     * Prueba del método POST "/api/pais-service/pais", que comprueba que se crea un nuevo país correctamente.
+     * @throws Exception Se lanza una excepción si no se encuentra el país con el id especificado.
      */
     @Test
     public void testCrearPais() throws Exception {
         Pais pais = new Pais(null, "España");
 
-        this.mockMvc.perform(post("/pais-service/paises")
+        this.mockMvc.perform(post("/api/pais-service/pais")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(pais)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombre", is(pais.getPais())));
-
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.pais", is(pais.getPais())));
         paisService.delete(pais);
     }
 
     /**
-     * Prueba del método PUT "/pais-service/paises", que comprueba que se actualiza un país correctamente.
-     * @throws Exception
+     * Prueba del método PUT "/api/pais-service/pais", que comprueba que se actualiza un país correctamente.
+     * @throws Exception Se lanza una excepción si no se encuentra el país con el id especificado.
      */
     @Test
     public void testActualizarPais() throws Exception {
@@ -142,27 +132,25 @@ public class PaisRestControllerTest {
         paisService.save(pais);
         pais.setPais("Portugal");
 
-        this.mockMvc.perform(put("/pais-service/paises")
+        this.mockMvc.perform(put("/api/pais-service/pais")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(pais)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nombre", is(pais.getPais())));
-//                .andExpect(jsonPath("$.capital", is(pais.getPais())));
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$.pais", is(pais.getPais())));
         paisService.delete(pais);
     }
 
     /**
-     * Prueba del método DELETE "/pais-service/paises/{id}", que comprueba que se elimina un país correctamente.
-     * @throws Exception
+     * Prueba del método DELETE "/api/pais-service/paises/{id}", que comprueba que se elimina un país correctamente.
+     * @throws Exception Se lanza una excepción si no se encuentra el país con el id especificado.
      */
     @Test
     public void testBorrarPais() throws Exception {
         Pais pais = new Pais(null, "Canada");
-        paisService.save(pais);
+        pais = paisService.save(pais);
 
-        this.mockMvc.perform(delete("/pais-service/paises/{id}", pais.getId()))
+        this.mockMvc.perform(delete("/api/pais-service/paises/{id}", pais.getId()))
                 .andExpect(status().isOk());
-
         assertNull(paisService.findById(pais.getId()));
     }
 

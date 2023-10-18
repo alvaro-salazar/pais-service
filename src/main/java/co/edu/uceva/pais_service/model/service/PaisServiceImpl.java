@@ -51,7 +51,7 @@ public class PaisServiceImpl implements IPaisService{
      */
     @Override
     public Pais findById(Long id) {
-        return paisDao.findById(id).get();
+        return paisDao.findById(id).orElse(null);
     }
 
     /**

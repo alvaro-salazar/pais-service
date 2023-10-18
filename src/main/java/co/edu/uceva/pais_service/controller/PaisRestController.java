@@ -65,7 +65,7 @@ public class PaisRestController {
      * @param pais pais a crear
      * @return Pais creado
      */
-    @PostMapping("/paises")
+    @PostMapping("/pais")
     public Pais crearPais(@RequestBody Pais pais){
         return paisService.save(pais);
     }
@@ -88,7 +88,7 @@ public class PaisRestController {
      * @param pais pais a actualizar
      * @return Pais actualizado
      */
-    @PutMapping("/paises")
+    @PutMapping("/pais")
     public Pais actualizarPais(@RequestBody Pais pais){
         return paisService.update(pais);
     }
