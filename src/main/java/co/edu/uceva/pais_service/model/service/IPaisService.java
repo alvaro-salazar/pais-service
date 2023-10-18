@@ -12,4 +12,5 @@ public interface IPaisService {
    List<Pais> findAll(); //Devuelve una lista de todos los paises
    Pais findById(Long id); //Busca un pais por su id y me retorna un objeto de tipo Pais
    Pais save(Pais pais); //Guarda un pais y me retorna un objeto de tipo Pais
+   Pais update(Pais pais);
 }

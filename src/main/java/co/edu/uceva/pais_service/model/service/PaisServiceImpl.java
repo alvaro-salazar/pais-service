@@ -63,4 +63,9 @@ public class PaisServiceImpl implements IPaisService{
     public Pais save(Pais pais) {
         return paisDao.save(pais);
     }
+
+    @Override
+    public Pais update(Pais pais) {
+        return paisDao.save(pais);
+    }
 }

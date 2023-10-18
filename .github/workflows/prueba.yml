@@ -1,0 +1,39 @@
+name: Prueba
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres
+        env:
+          POSTGRES_USER: devdb
+          POSTGRES_PASSWORD: a1b2c3d4
+          POSTGRES_DB: curso_springboot
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Haciendo Checkout
+        uses: actions/checkout@v2
+
+      - name: Ajustando el JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: 17
+
+      - name: Build con Maven
+        run: mvn clean package -DskipTests
+
+      - name: Ejecutando pruebas con Docker
+        run: |
+          docker build -t pais-service .
+          docker run -e SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/curso_springboot -e SPRING_DATASOURCE_USERNAME=devdb -e SPRING_DATASOURCE_PASSWORD=a1b2c3d4 --network host pais-service mvn test
+
+      - name: Generar el reporte Surefire
+        run: mvn surefire-report:report
