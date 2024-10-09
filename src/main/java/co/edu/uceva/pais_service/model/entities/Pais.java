@@ -28,5 +28,6 @@ public class Pais {
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
 
+    // Nombre del pais
     private String pais;
 }
